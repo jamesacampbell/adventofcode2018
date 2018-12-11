@@ -1,8 +1,9 @@
 from collections import namedtuple
 import numpy as np
 from matplotlib import pyplot as plt
+from multiprocessing import Pool
 Rectangle = namedtuple('Rectangle', 'xmin ymin xmax ymax')
-
+Zerothing = namedtuple('Zerothing', 'xr, yr, pointvalue')
 ra = Rectangle(3., 3., 5., 5.)
 rb = Rectangle(1., 1., 4., 3.5)
 # intersection here is (3, 3, 4, 3.5), or an area of 1*.5=.5
@@ -10,6 +11,8 @@ rb = Rectangle(1., 1., 4., 3.5)
 datalist = list()
 overlaps = set()
 nparrayready = list()
+zeros = set()
+Matrix = [[0 for x in range(1001)] for x in range(1001)]
 
 
 def area(a, b):  # returns None if rectangles don't intersect
@@ -56,7 +59,7 @@ def loadData(input):
 def explodeRect(rect):
     i = 0
     z = 0
-    print(rect)
+    # print(rect)
     tinycoords = list()
     while i < (rect.xmax - rect.xmin):
         while z < (rect.ymax - rect.ymin):
@@ -67,13 +70,13 @@ def explodeRect(rect):
         z = 0
         i = i + 1
     # print(tinycoords)
-    return tinycoords, Matrix
+    return tinycoords
 
 
 def checkfor2():
     i, z, totaloverlap = 0, 0, 0
-    while i < 1000:
-        while z < 1000:
+    while i <= 1000:
+        while z <= 1000:
             if Matrix[i][z] > 1:
                 totaloverlap += 1
             z += 1
@@ -84,33 +87,51 @@ def checkfor2():
 
 def checkfor0():
     i, z, zerooverlap = 0, 0, 0
-    while i < 1000:
-        while z < 1000:
-            if Matrix[i][z] < 1:
+    while i <= 1000:
+        while z <= 1000:
+            if Matrix[i][z] == 0 or Matrix[i][z] == None:
                 zerooverlap += 1
-                print("matrix:", i, z)
+                #print("matrix:", i, z)
+                zeros.add("{}:{}".format(i, z))
             z += 1
         z = 0
         i += 1
     return zerooverlap
 
 
+def compareRectZeros(rect):
+    i = 0
+    z = 0
+    # print(rect)
+    if "{}:{}".format(rect.xmin, rect.ymin) in zeros and "{}:{}".format(rect.xmax, rect.ymax) in zeros:
+        return rect
+    else:
+        return "nope"
+
+
 if __name__ == "__main__":
     datalisted = loadData('input.txt')
-    Matrix = [[0 for x in range(1000)] for x in range(1000)]
+
     print(Matrix[1][1])
     for item in datalisted:
-        tinycoordslist, Matrix = explodeRect(item)
+        tinycoordslist = explodeRect(item)
         nparrayready = nparrayready + tinycoordslist
-    lol = np.array(nparrayready)
-    x, y = lol.T
-    plt.scatter(1000, 1000)
-    plt.scatter(x, y)
-    plt.xlim(0, 1000)
-    plt.ylim(0, 1000)
-    plt.show()
+    # lol = np.array(nparrayready)
+    # x, y = lol.T
+    # print(x)
+    # exit()
+    # turn this back on to see cool overlap plot
+    # plt.scatter(1000, 1000)
+    # plt.scatter(x, y)
+    # plt.xlim(0, 1000)
+    # plt.ylim(0, 1000)
+    # plt.show()
     print(checkfor2())
     print(checkfor0())
+    # for item in datalisted:
+    #     placer = compareRectZeros(item)
+    with Pool() as p:
+        print(p.map(compareRectZeros, datalisted))
     exit()
 
     # print(datalisted)
